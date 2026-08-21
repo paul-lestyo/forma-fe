@@ -170,7 +170,7 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
           ))}
         </div>
 
-        {/* Task List Container (Sorted by EXP reward ascending) */}
+        {/* Task List Container with 60fps Smooth Filter Switch Transition */}
         <div className="min-h-[160px] my-3">
           {loading ? (
             <div className="space-y-3 py-2 animate-pulse">
@@ -179,11 +179,11 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
               <div className="h-5 bg-slate-100 rounded-md w-4/5"></div>
             </div>
           ) : sortedQuests.length === 0 ? (
-            <div className="text-center py-8 text-xs text-slate-400">
+            <div key={filter} className="animate-filter-switch text-center py-8 text-xs text-slate-400">
               Tidak ada task untuk kategori ini.
             </div>
           ) : (
-            <div className="space-y-1">
+            <div key={filter} className="animate-filter-switch space-y-1">
               {sortedQuests.map((q) => (
                 <QuestCard key={`${q.item_type}-${q.id}`} quest={q} onToggle={handleToggle} onDelete={handleDelete} />
               ))}
