@@ -12,19 +12,21 @@ interface TrackerTabProps {
   onUserUpdate: (updatedUser: User) => void;
 }
 
+type FilterType = 'daily' | 'weekly' | 'monthly' | 'all';
+
 export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) => {
   const [currentDateStr, setCurrentDateStr] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
   const [quests, setQuests] = useState<QuestItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [newTitle, setNewTitle] = useState<string>('');
   const [newPriority, setNewPriority] = useState<Priority>('MEDIUM');
+  const [filter, setFilter] = useState<FilterType>('daily');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [showLevelUpModal, setShowLevelUpModal] = useState<boolean>(false);
 
   const fetchTrackerData = async (date: string) => {
     setLoading(true);
     try {
-      // Promise.all with 150ms micro-delay so loading Skeleton animation is pleasantly visible to human eyes
       const [res] = await Promise.all([
         api.get(`/tracker?date=${date}`),
         new Promise((resolve) => setTimeout(resolve, 150)),
@@ -127,6 +129,18 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
     }
   };
 
+  // 1. Filter quests by frequency (Default: 'daily')
+  const filteredQuests = quests.filter((q) => {
+    if (filter === 'all') return true;
+    if (filter === 'daily') return q.frequency === 'daily' || q.item_type === 'custom' || !q.frequency;
+    if (filter === 'weekly') return q.frequency === 'weekly';
+    if (filter === 'monthly') return q.frequency === 'monthly';
+    return true;
+  });
+
+  // 2. Sort filtered quests by score/EXP reward ascending (score terkecil ke terbesar)
+  const sortedQuests = [...filteredQuests].sort((a, b) => a.exp_reward - b.exp_reward);
+
   return (
     <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xl shadow-slate-200/40 max-w-sm mx-auto min-h-[440px] flex flex-col justify-between transition-all">
       <div>
@@ -140,7 +154,23 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
           onCloseLevelUpModal={() => setShowLevelUpModal(false)}
         />
 
-        {/* Task List Container with Sleek Skeleton Loading */}
+        {/* Filter Bar (Harian, Mingguan, Bulanan, Semua - Default: Harian) */}
+        <div className="bg-slate-100 p-1 rounded-2xl flex items-center mb-3">
+          {(['daily', 'weekly', 'monthly', 'all'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              className={`flex-1 py-1 text-[11px] font-semibold rounded-xl transition-all ${
+                filter === f ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-400 hover:text-slate-700'
+              }`}
+            >
+              {f === 'daily' ? 'Harian' : f === 'weekly' ? 'Mingguan' : f === 'monthly' ? 'Bulanan' : 'Semua'}
+            </button>
+          ))}
+        </div>
+
+        {/* Task List Container (Sorted by EXP reward ascending) */}
         <div className="min-h-[160px] my-3">
           {loading ? (
             <div className="space-y-3 py-2 animate-pulse">
@@ -148,13 +178,13 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
               <div className="h-5 bg-slate-100 rounded-md w-2/3"></div>
               <div className="h-5 bg-slate-100 rounded-md w-4/5"></div>
             </div>
-          ) : quests.length === 0 ? (
+          ) : sortedQuests.length === 0 ? (
             <div className="text-center py-8 text-xs text-slate-400">
-              No tasks for this day.
+              Tidak ada task untuk kategori ini.
             </div>
           ) : (
             <div className="space-y-1">
-              {quests.map((q) => (
+              {sortedQuests.map((q) => (
                 <QuestCard key={`${q.item_type}-${q.id}`} quest={q} onToggle={handleToggle} onDelete={handleDelete} />
               ))}
             </div>
@@ -175,7 +205,7 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
         <button
           type="button"
           onClick={cyclePriority}
-          className="text-xs font-mono font-medium text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/80 px-2 py-1 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+          className="text-xs font-mono font-medium text-slate-400 hover:text-slate-600 px-1 py-1 cursor-pointer flex-shrink-0"
           title="Click to change EXP reward"
         >
           {getPriorityLabel(newPriority)}
