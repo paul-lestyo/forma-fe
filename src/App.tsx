@@ -7,6 +7,7 @@ import { RoutineTab } from './components/RoutineTab';
 import { RecapTab } from './components/RecapTab';
 import { ProfileTab } from './components/ProfileTab';
 import { BottomNav, TabType } from './components/BottomNav';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { Loader2 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -84,34 +85,38 @@ export const App: React.FC = () => {
     );
   }
 
-  if (!token || !user) {
-    return <AuthScreen onLoginSuccess={handleLoginSuccess} />;
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-slate-900 selection:bg-slate-200">
-      {/* Mobile / Widget Frame Container */}
-      <div className="w-full max-w-sm flex flex-col relative py-4">
-        
-        {/* Dynamic Tab Content */}
-        <main className="flex-1 pb-20">
-          {activeTab === 'tracker' && (
-            <TrackerTab user={user} onUserUpdate={handleUserUpdate} />
-          )}
-          {activeTab === 'routine' && (
-            <RoutineTab />
-          )}
-          {activeTab === 'recap' && (
-            <RecapTab />
-          )}
-          {activeTab === 'profile' && (
-            <ProfileTab user={user} onLogout={handleLogout} />
-          )}
-        </main>
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-between text-slate-900 selection:bg-slate-200">
+      {/* Top PWA Installation Banner for new visitors */}
+      <PWAInstallBanner />
 
-        {/* 4-Tab Light Floating Pill Navigation Bar */}
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-      </div>
+      {!token || !user ? (
+        <div className="w-full flex-1 flex items-center justify-center p-4">
+          <AuthScreen onLoginSuccess={handleLoginSuccess} />
+        </div>
+      ) : (
+        /* Mobile / Widget Frame Container */
+        <div className="w-full max-w-sm flex-1 flex flex-col justify-center relative p-4 py-6">
+          {/* Dynamic Tab Content */}
+          <main className="flex-1 pb-20">
+            {activeTab === 'tracker' && (
+              <TrackerTab user={user} onUserUpdate={handleUserUpdate} />
+            )}
+            {activeTab === 'routine' && (
+              <RoutineTab />
+            )}
+            {activeTab === 'recap' && (
+              <RecapTab />
+            )}
+            {activeTab === 'profile' && (
+              <ProfileTab user={user} onLogout={handleLogout} />
+            )}
+          </main>
+
+          {/* 4-Tab Light Floating Pill Navigation Bar */}
+          <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+      )}
     </div>
   );
 };
