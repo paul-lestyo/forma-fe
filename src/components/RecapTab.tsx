@@ -17,15 +17,14 @@ export const RecapTab: React.FC = () => {
       const res = await api.get(`/recap?week_offset=${offset}`);
       setData(res.data);
 
-      // Auto-select today if in grid, or latest active day
+      // Auto-select today exactly as it is without any fake fallback
       const grid = (res.data?.contribution_grid as ContributionDay[]) || [];
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       const todayActivity = grid.find((m) => m.date === todayStr);
       if (todayActivity) {
         setSelectedDay(todayActivity);
-      } else if (grid.length > 0) {
-        const nonFuture = grid.filter((g) => !g.is_future);
-        setSelectedDay(nonFuture.length > 0 ? nonFuture[nonFuture.length - 1] : grid[0]);
+      } else {
+        setSelectedDay(null);
       }
     } catch (err) {
       console.error('Failed to fetch recap data:', err);
