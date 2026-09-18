@@ -61,6 +61,17 @@ export interface MonthlyDayActivity {
   completed_count: number;
 }
 
+export interface ContributionDay {
+  date: string;
+  day: number;
+  day_of_week: number;
+  month: string;
+  exp_earned: number;
+  level: number;
+  completed_count: number;
+  is_future: boolean;
+}
+
 export interface RecapData {
   total_quests_completed: number;
   streak_days: number;
@@ -75,4 +86,7 @@ export interface RecapData {
   month_name?: string;
   total_exp_month?: number;
   monthly_activity?: MonthlyDayActivity[];
+  contribution_grid?: ContributionDay[];
+  total_contributions?: number;
 }
+
