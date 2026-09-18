@@ -155,7 +155,7 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
           onCloseLevelUpModal={() => setShowLevelUpModal(false)}
         />
 
-        {/* Filter Bar (Harian, Mingguan, Bulanan, Semua - Default: Harian) */}
+        {/* Filter Bar (Daily, Weekly, Monthly, All - Default: Daily) */}
         <div className="bg-slate-100 p-1 rounded-2xl flex items-center mb-3">
           {(['daily', 'weekly', 'monthly', 'all'] as const).map((f) => (
             <button
@@ -166,7 +166,7 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
                 filter === f ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-400 hover:text-slate-700'
               }`}
             >
-              {f === 'daily' ? 'Harian' : f === 'weekly' ? 'Mingguan' : f === 'monthly' ? 'Bulanan' : 'Semua'}
+              {f === 'daily' ? 'Daily' : f === 'weekly' ? 'Weekly' : f === 'monthly' ? 'Monthly' : 'All'}
             </button>
           ))}
         </div>
@@ -181,7 +181,7 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
             </div>
           ) : sortedQuests.length === 0 ? (
             <div key={filter} className="animate-filter-switch text-center py-8 text-xs text-slate-400">
-              Tidak ada task untuk kategori ini.
+              No tasks for this category.
             </div>
           ) : (
             <div key={filter} className="animate-filter-switch space-y-1">

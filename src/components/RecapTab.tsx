@@ -70,7 +70,7 @@ export const RecapTab: React.FC = () => {
         <div className="text-center">
           <h2 className="text-base font-bold text-slate-900 tracking-tight">Analytics & Recap</h2>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
-            +{data?.total_exp_this_week || 0} EXP {weekOffset === 0 ? 'minggu ini' : 'periode ini'}
+            +{data?.total_exp_this_week || 0} EXP {weekOffset === 0 ? 'this week' : 'this period'}
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export const RecapTab: React.FC = () => {
                 type="button"
                 onClick={() => setWeekOffset((prev) => prev - 1)}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
-                title="Minggu sebelumnya"
+                title="Previous week"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -118,7 +118,7 @@ export const RecapTab: React.FC = () => {
                 onClick={() => setWeekOffset((prev) => Math.min(0, prev + 1))}
                 disabled={weekOffset >= 0}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
-                title="Minggu berikutnya"
+                title="Next week"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -164,11 +164,11 @@ export const RecapTab: React.FC = () => {
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-slate-500" />
               <span className="text-xs font-bold text-slate-900">
-                Kontribusi Aktivitas
+                Activity Contribution
               </span>
             </div>
             <span className="text-[10px] text-slate-400 font-mono">
-              {data?.total_contributions || 0} kegiatan selesai
+              {data?.total_contributions || 0} activities completed
             </span>
           </div>
 
@@ -196,15 +196,15 @@ export const RecapTab: React.FC = () => {
 
               {/* Grid: 7 rows x N week columns */}
               <div className="flex gap-[3px]">
-                {/* Left Day Labels: Sen, Rab, Jum */}
+                {/* Left Day Labels: Mon, Wed, Fri */}
                 <div className="flex flex-col gap-[3px] pr-1 justify-between text-[8px] font-medium text-slate-400 font-mono select-none">
-                  <span className="h-[10px] leading-[10px]">Sen</span>
-                  <span className="h-[10px] leading-[10px] invisible">Sel</span>
-                  <span className="h-[10px] leading-[10px]">Rab</span>
-                  <span className="h-[10px] leading-[10px] invisible">Kam</span>
-                  <span className="h-[10px] leading-[10px]">Jum</span>
-                  <span className="h-[10px] leading-[10px] invisible">Sab</span>
-                  <span className="h-[10px] leading-[10px] invisible">Min</span>
+                  <span className="h-[10px] leading-[10px]">Mon</span>
+                  <span className="h-[10px] leading-[10px] invisible">Tue</span>
+                  <span className="h-[10px] leading-[10px]">Wed</span>
+                  <span className="h-[10px] leading-[10px] invisible">Thu</span>
+                  <span className="h-[10px] leading-[10px]">Fri</span>
+                  <span className="h-[10px] leading-[10px] invisible">Sat</span>
+                  <span className="h-[10px] leading-[10px] invisible">Sun</span>
                 </div>
 
                 {/* Week Columns */}
@@ -238,7 +238,7 @@ export const RecapTab: React.FC = () => {
                           title={
                             day.is_future
                               ? day.date
-                              : `${day.date}: +${day.exp_earned} EXP (${day.completed_count} task selesai)`
+                              : `${day.date}: +${day.exp_earned} EXP (${day.completed_count} tasks completed)`
                           }
                         />
                       );
@@ -260,7 +260,7 @@ export const RecapTab: React.FC = () => {
                   +{selectedDay.exp_earned} EXP
                 </span>
                 <span className="text-[10px] text-slate-400 font-sans">
-                  ({selectedDay.completed_count} selesai)
+                  ({selectedDay.completed_count} completed)
                 </span>
               </div>
             </div>
@@ -268,15 +268,15 @@ export const RecapTab: React.FC = () => {
 
           {/* GitHub-style Less -> More Legend */}
           <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
-            <span className="font-medium font-mono text-[9px]">20 Minggu Terakhir</span>
+            <span className="font-medium font-mono text-[9px]">Last 20 Weeks</span>
             <div className="flex items-center gap-1 font-medium">
-              <span>Kurang</span>
+              <span>Less</span>
               <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-100" title="0 EXP" />
               <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-300" title="1-74 EXP" />
               <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-500" title="75-149 EXP" />
               <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-700" title="150-224 EXP" />
               <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-900" title="225+ EXP" />
-              <span>Lebih</span>
+              <span>More</span>
             </div>
           </div>
         </div>
