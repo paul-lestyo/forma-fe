@@ -1,33 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../lib/api';
-import { RecapData, MonthlyDayActivity } from '../types';
+import { RecapData, ContributionDay } from '../types';
 import { Loader2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const RecapTab: React.FC = () => {
   const [data, setData] = useState<RecapData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [currentMonth, setCurrentMonth] = useState<string>(() => format(new Date(), 'yyyy-MM'));
   const [weekOffset, setWeekOffset] = useState<number>(0);
-  const [selectedDay, setSelectedDay] = useState<MonthlyDayActivity | null>(null);
+  const [selectedDay, setSelectedDay] = useState<ContributionDay | null>(null);
+  const gridScrollRef = useRef<HTMLDivElement>(null);
 
-  const fetchRecap = async (month: string, offset: number) => {
+  const fetchRecap = async (offset: number) => {
     setLoading(true);
     try {
-      const res = await api.get(`/recap?month=${month}&week_offset=${offset}`);
+      const res = await api.get(`/recap?week_offset=${offset}`);
       setData(res.data);
 
-      // Auto-select today if in this month, or highest EXP day
-      const monthly = (res.data?.monthly_activity as MonthlyDayActivity[]) || [];
+      // Auto-select today if in grid, or latest active day
+      const grid = (res.data?.contribution_grid as ContributionDay[]) || [];
       const todayStr = format(new Date(), 'yyyy-MM-dd');
-      const todayActivity = monthly.find((m) => m.date === todayStr);
+      const todayActivity = grid.find((m) => m.date === todayStr);
       if (todayActivity) {
         setSelectedDay(todayActivity);
-      } else if (monthly.length > 0) {
-        const peak = [...monthly].sort((a, b) => b.exp_earned - a.exp_earned)[0];
-        setSelectedDay(peak);
-      } else {
-        setSelectedDay(null);
+      } else if (grid.length > 0) {
+        const nonFuture = grid.filter((g) => !g.is_future);
+        setSelectedDay(nonFuture.length > 0 ? nonFuture[nonFuture.length - 1] : grid[0]);
       }
     } catch (err) {
       console.error('Failed to fetch recap data:', err);
@@ -37,20 +35,15 @@ export const RecapTab: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchRecap(currentMonth, weekOffset);
-  }, [currentMonth, weekOffset]);
+    fetchRecap(weekOffset);
+  }, [weekOffset]);
 
-  const handlePrevMonth = () => {
-    const [y, m] = currentMonth.split('-').map(Number);
-    const prevDate = new Date(y, m - 2, 1);
-    setCurrentMonth(format(prevDate, 'yyyy-MM'));
-  };
-
-  const handleNextMonth = () => {
-    const [y, m] = currentMonth.split('-').map(Number);
-    const nextDate = new Date(y, m, 1);
-    setCurrentMonth(format(nextDate, 'yyyy-MM'));
-  };
+  // Auto scroll grid to the right (latest weeks)
+  useEffect(() => {
+    if (gridScrollRef.current) {
+      gridScrollRef.current.scrollLeft = gridScrollRef.current.scrollWidth;
+    }
+  }, [data]);
 
   if (loading && !data) {
     return (
@@ -63,11 +56,13 @@ export const RecapTab: React.FC = () => {
   const expHistory = data?.exp_history || [];
   const maxEXP = Math.max(...expHistory.map((h) => h.exp_earned), 50);
   const completionRate = Math.min(100, Math.round(data?.weekly_completion_rate || 0));
-  const monthlyActivity = data?.monthly_activity || [];
 
-  // Blank cells before the 1st of month (1=Mon..7=Sun)
-  const firstDayOfWeek = monthlyActivity.length > 0 ? monthlyActivity[0].day_of_week : 1;
-  const blankCells = Array.from({ length: firstDayOfWeek - 1 });
+  // Chunk contribution grid into weeks (7 days each)
+  const contributionGrid = data?.contribution_grid || [];
+  const weeks: ContributionDay[][] = [];
+  for (let i = 0; i < contributionGrid.length; i += 7) {
+    weeks.push(contributionGrid.slice(i, i + 7));
+  }
 
   return (
     <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xl shadow-slate-200/40 max-w-sm mx-auto min-h-[440px] flex flex-col justify-between space-y-4">
@@ -163,82 +158,95 @@ export const RecapTab: React.FC = () => {
           </div>
         </div>
 
-        {/* Minimalist GitHub-style Monthly Heatmap */}
-        <div className="space-y-2.5 pt-2 border-t border-slate-100">
-          {/* Month Switcher Header */}
+        {/* GitHub-style Contribution Heatmap */}
+        <div className="space-y-2 pt-2 border-t border-slate-100">
+          {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-slate-500" />
               <span className="text-xs font-bold text-slate-900">
-                {data?.month_name || currentMonth}
+                Kontribusi Aktivitas
               </span>
             </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={handlePrevMonth}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
-                title="Bulan sebelumnya"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleNextMonth}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
-                title="Bulan berikutnya"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <span className="text-[10px] text-slate-400 font-mono">
+              {data?.total_contributions || 0} kegiatan selesai
+            </span>
           </div>
 
-          {/* Minimalist 7-Col Matrix Container */}
-          <div className="w-full max-w-[224px] mx-auto space-y-1.5">
-            {/* Days of Week Header (Mon-Sun) */}
-            <div className="grid grid-cols-7 gap-1.5 text-center">
-              {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map((dayName, idx) => (
-                <span key={idx} className="text-[9px] font-semibold text-slate-400 select-none">
-                  {dayName}
-                </span>
-              ))}
-            </div>
+          {/* Heatmap Matrix with horizontal scroll support */}
+          <div
+            ref={gridScrollRef}
+            className="overflow-x-auto pb-1 scrollbar-none select-none"
+          >
+            <div className="min-w-fit flex flex-col gap-1">
+              {/* Month Labels Header */}
+              <div className="flex gap-[3px] pl-6 h-3.5 items-center">
+                {weeks.map((week, idx) => {
+                  const isNewMonth = idx === 0 || week[0].month !== weeks[idx - 1][0].month;
+                  return (
+                    <div key={idx} className="w-[10px] relative flex justify-start">
+                      {isNewMonth && (
+                        <span className="absolute left-0 -top-0.5 text-[8px] font-mono text-slate-400 font-medium whitespace-nowrap pointer-events-none">
+                          {week[0].month}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
-            {/* Monthly Heatmap 7-Col Grid (Pure minimalist squares, no date numbers) */}
-            <div className="grid grid-cols-7 gap-1.5">
-              {/* Blank offset cells for start of month */}
-              {blankCells.map((_, i) => (
-                <div key={`blank-${i}`} className="aspect-square" />
-              ))}
+              {/* Grid: 7 rows x N week columns */}
+              <div className="flex gap-[3px]">
+                {/* Left Day Labels: Sen, Rab, Jum */}
+                <div className="flex flex-col gap-[3px] pr-1 justify-between text-[8px] font-medium text-slate-400 font-mono select-none">
+                  <span className="h-[10px] leading-[10px]">Sen</span>
+                  <span className="h-[10px] leading-[10px] invisible">Sel</span>
+                  <span className="h-[10px] leading-[10px]">Rab</span>
+                  <span className="h-[10px] leading-[10px] invisible">Kam</span>
+                  <span className="h-[10px] leading-[10px]">Jum</span>
+                  <span className="h-[10px] leading-[10px] invisible">Sab</span>
+                  <span className="h-[10px] leading-[10px] invisible">Min</span>
+                </div>
 
-              {/* Day squares with intensity levels */}
-              {monthlyActivity.map((d) => {
-                const isSelected = selectedDay?.date === d.date;
+                {/* Week Columns */}
+                {weeks.map((week, wIdx) => (
+                  <div key={wIdx} className="flex flex-col gap-[3px]">
+                    {week.map((day) => {
+                      const isSelected = selectedDay?.date === day.date;
+                      let colorClass = 'bg-slate-100 hover:bg-slate-200';
 
-                let colorClass = 'bg-slate-100 hover:bg-slate-200';
-                if (d.level === 1) {
-                  colorClass = 'bg-slate-300 hover:bg-slate-400';
-                } else if (d.level === 2) {
-                  colorClass = 'bg-slate-500 hover:bg-slate-600';
-                } else if (d.level === 3) {
-                  colorClass = 'bg-slate-700 hover:bg-slate-800';
-                } else if (d.level === 4) {
-                  colorClass = 'bg-slate-900 hover:bg-black shadow-xs';
-                }
+                      if (day.is_future) {
+                        colorClass = 'bg-slate-100/30 cursor-default pointer-events-none';
+                      } else if (day.level === 1) {
+                        colorClass = 'bg-slate-300 hover:bg-slate-400';
+                      } else if (day.level === 2) {
+                        colorClass = 'bg-slate-500 hover:bg-slate-600';
+                      } else if (day.level === 3) {
+                        colorClass = 'bg-slate-700 hover:bg-slate-800';
+                      } else if (day.level === 4) {
+                        colorClass = 'bg-slate-900 hover:bg-black shadow-xs';
+                      }
 
-                return (
-                  <button
-                    key={d.date}
-                    type="button"
-                    onClick={() => setSelectedDay(d)}
-                    className={`aspect-square rounded-[3.5px] transition-all duration-150 ${colorClass} ${
-                      isSelected ? 'ring-2 ring-slate-900 ring-offset-1 z-10' : ''
-                    }`}
-                    title={`${d.date}: +${d.exp_earned} EXP (${d.completed_count} task selesai)`}
-                  />
-                );
-              })}
+                      return (
+                        <button
+                          key={day.date}
+                          type="button"
+                          disabled={day.is_future}
+                          onClick={() => setSelectedDay(day)}
+                          className={`w-[10px] h-[10px] rounded-[2px] transition-all duration-150 ${colorClass} ${
+                            isSelected ? 'ring-1.5 ring-slate-900 ring-offset-1 z-10' : ''
+                          }`}
+                          title={
+                            day.is_future
+                              ? day.date
+                              : `${day.date}: +${day.exp_earned} EXP (${day.completed_count} task selesai)`
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -261,7 +269,7 @@ export const RecapTab: React.FC = () => {
 
           {/* GitHub-style Less -> More Legend */}
           <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
-            <span className="font-medium font-mono text-[9px]">Total: +{data?.total_exp_month || 0} EXP</span>
+            <span className="font-medium font-mono text-[9px]">20 Minggu Terakhir</span>
             <div className="flex items-center gap-1 font-medium">
               <span>Kurang</span>
               <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-100" title="0 EXP" />
