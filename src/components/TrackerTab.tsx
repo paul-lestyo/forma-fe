@@ -109,6 +109,7 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
         level: res.data.new_level,
         current_exp: res.data.current_exp,
         total_exp: res.data.total_exp,
+        streak_days: res.data.streak_days !== undefined ? res.data.streak_days : user.streak_days,
       };
       onUserUpdate(updatedUser);
 
@@ -122,7 +123,7 @@ export const TrackerTab: React.FC<TrackerTabProps> = ({ user, onUserUpdate }) =>
 
   const handleDelete = async (quest: QuestItem) => {
     try {
-      await api.delete(`/todos/${quest.id}?type=${quest.item_type}`);
+      await api.delete(`/todos/${quest.id}?type=${quest.item_type}&date=${currentDateStr}`);
       setQuests((prev) => prev.filter((q) => !(q.id === quest.id && q.item_type === quest.item_type)));
     } catch (err) {
       console.error('Failed to delete quest:', err);

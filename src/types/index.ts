@@ -44,11 +44,21 @@ export interface ToggleQuestResponse {
   current_exp: number;
   total_exp: number;
   target_exp: number;
+  streak_days?: number;
 }
 
 export interface EXPDayHistory {
   date: string;
   exp_earned: number;
+}
+
+export interface MonthlyDayActivity {
+  date: string;
+  day: number;
+  day_of_week: number;
+  exp_earned: number;
+  level: number;
+  completed_count: number;
 }
 
 export interface RecapData {
@@ -59,4 +69,10 @@ export interface RecapData {
   peak_day?: string;
   active_routines_count?: number;
   exp_history: EXPDayHistory[];
+  week_range?: string;
+  week_offset?: number;
+  selected_month?: string;
+  month_name?: string;
+  total_exp_month?: number;
+  monthly_activity?: MonthlyDayActivity[];
 }
