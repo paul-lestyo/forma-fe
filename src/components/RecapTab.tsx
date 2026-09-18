@@ -272,10 +272,10 @@ export const RecapTab: React.FC = () => {
             <div className="flex items-center gap-1 font-medium">
               <span>Kurang</span>
               <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-100" title="0 EXP" />
-              <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-300" title="1-24 EXP" />
-              <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-500" title="25-49 EXP" />
-              <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-700" title="50-99 EXP" />
-              <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-900" title="100+ EXP" />
+              <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-300" title="1-74 EXP" />
+              <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-500" title="75-149 EXP" />
+              <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-700" title="150-224 EXP" />
+              <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-900" title="225+ EXP" />
               <span>Lebih</span>
             </div>
           </div>
